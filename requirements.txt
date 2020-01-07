@@ -1,4 +1,6 @@
-Flask==0.10.1
-Flask-RESTful==0.2.12
-gensim==0.12.3
+gensim
+flask
+# Flask==1.1.1
+# Flask-RESTful==1.1.1
+# gensim==3.8.0
 

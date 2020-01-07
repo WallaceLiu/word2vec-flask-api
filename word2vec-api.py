@@ -2,9 +2,10 @@ from flask import Flask, request, jsonify
 from flask.ext.restful import Resource, Api, reqparse
 from gensim.models.word2vec import Word2Vec as w
 from gensim import utils, matutils
-from numpy import exp, dot, zeros, outer, random, dtype, get_include, float32 as REAL,\
-     uint32, seterr, array, uint8, vstack, argsort, fromstring, sqrt, newaxis, ndarray, empty, sum as np_sum
-import cPickle
+from numpy import exp, dot, zeros, outer, random, dtype, get_include, float32 as REAL, \
+    uint32, seterr, array, uint8, vstack, argsort, fromstring, sqrt, newaxis, ndarray, empty, sum as np_sum
+# import cPickle
+import _pickle as cPickle
 import argparse
 import base64
 import sys
@@ -24,7 +25,7 @@ class N_Similarity(Resource):
         parser.add_argument('ws1', type=str, required=True, help="Word set 1 cannot be blank!", action='append')
         parser.add_argument('ws2', type=str, required=True, help="Word set 2 cannot be blank!", action='append')
         args = parser.parse_args()
-        return model.n_similarity(filter_words(args['ws1']),filter_words(args['ws2']))
+        return model.n_similarity(filter_words(args['ws1']), filter_words(args['ws2']))
 
 
 class Similarity(Resource):
@@ -49,13 +50,13 @@ class MostSimilar(Resource):
         pos = [] if pos == None else pos
         neg = [] if neg == None else neg
         t = 10 if t == None else t
-        print "positive: " + str(pos) + " negative: " + str(neg) + " topn: " + str(t)
+        print("positive: " + str(pos) + " negative: " + str(neg) + " topn: " + str(t))
         try:
-            res = model.most_similar_cosmul(positive=pos,negative=neg,topn=t)
+            res = model.most_similar_cosmul(positive=pos, negative=neg, topn=t)
             return res
-        except Exception, e:
-            print e
-            print res
+        except Exception as e:
+            print(e)
+            print(res)
 
 
 class Model(Resource):
@@ -67,34 +68,39 @@ class Model(Resource):
             res = model[args['word']]
             res = base64.b64encode(res)
             return res
-        except Exception, e:
-            print e
+        except Exception as  e:
+            print(e)
             return
+
 
 class ModelWordSet(Resource):
     def get(self):
         try:
             res = base64.b64encode(cPickle.dumps(set(model.index2word)))
             return res
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
             return
+
 
 app = Flask(__name__)
 api = Api(app)
+
 
 @app.errorhandler(404)
 def pageNotFound(error):
     return "page not found"
 
+
 @app.errorhandler(500)
 def raiseError(error):
     return error
 
+
 if __name__ == '__main__':
     global model
 
-    #----------- Parsing Arguments ---------------
+    # ----------- Parsing Arguments ---------------
     p = argparse.ArgumentParser()
     p.add_argument("--model", help="Path to the trained model")
     p.add_argument("--binary", help="Specifies the loaded model is binary")
@@ -109,11 +115,11 @@ if __name__ == '__main__':
     path = args.path if args.path else "/word2vec"
     port = int(args.port) if args.port else 5000
     if not args.model:
-        print "Usage: word2vec-apy.py --model path/to/the/model [--host host --port 1234]"
+        print("Usage: word2vec-apy.py --model path/to/the/model [--host host --port 1234]")
     model = w.load_word2vec_format(model_path, binary=binary)
-    api.add_resource(N_Similarity, path+'/n_similarity')
-    api.add_resource(Similarity, path+'/similarity')
-    api.add_resource(MostSimilar, path+'/most_similar')
-    api.add_resource(Model, path+'/model')
+    api.add_resource(N_Similarity, path + '/n_similarity')
+    api.add_resource(Similarity, path + '/similarity')
+    api.add_resource(MostSimilar, path + '/most_similar')
+    api.add_resource(Model, path + '/model')
     api.add_resource(ModelWordSet, '/word2vec/model_word_set')
     app.run(host=host, port=port)
